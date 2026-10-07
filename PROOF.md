@@ -7,8 +7,10 @@ What was checked for version 0.2.0 (stdio server plus the remote HTTP server and
 ```
 $ npm test
  Test Files  6 passed (6)
-      Tests  60 passed (60)
+      Tests  61 passed (61)
 ```
+
+Re-run on 2026-10-07: 61 tests pass (earlier runs showed 60).
 
 | File | Tests | What it covers |
 | --- | --- | --- |
@@ -16,7 +18,7 @@ $ npm test
 | `test/socrata.test.ts` | 10 | Client retries, timeouts, cache, error mapping |
 | `test/soql.test.ts` | 8 | Literal escaping and predicate builders |
 | `test/server.test.ts` | 5 | Full MCP protocol in memory |
-| `test/http.test.ts` | 15 | HTTP transport, routes, CORS, limits, timeouts |
+| `test/http.test.ts` | 16 | HTTP transport, routes, CORS, limits, timeouts |
 | `test/rateLimit.test.ts` | 7 | Token bucket, daily cap, env config |
 
 The first four files are the original 38 tests and are unchanged. Counts come from `npx vitest run --reporter=verbose`. No test uses the network: `fetch` is mocked and throws on any request it doesn't expect. The HTTP tests bind to 127.0.0.1 only.

@@ -35,14 +35,13 @@ Add this to `claude_desktop_config.json` (macOS: `~/Library/Application Support/
   "mcpServers": {
     "nyc-open-data": {
       "command": "npx",
-      "args": ["-y", "github:frogr/nyc-open-data-mcp"],
-      "env": {
-        "SOCRATA_APP_TOKEN": "optional-but-recommended"
-      }
+      "args": ["-y", "github:frogr/nyc-open-data-mcp"]
     }
   }
 }
 ```
+
+An app token is optional. It raises the rate limit. To use one, add an `env` entry with `SOCRATA_APP_TOKEN` set to your token.
 
 ### Claude Code
 

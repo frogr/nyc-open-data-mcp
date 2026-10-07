@@ -544,16 +544,21 @@
   };
 
   // ---------- connect snippets ----------
+  const cfg = (obj) => JSON.stringify({ mcpServers: { "nyc-open-data": obj } }, null, 2);
+  const LOCAL = { command: "npx", args: ["-y", "github:frogr/nyc-open-data-mcp"] };
   const CLIENTS = [
     { id: "claude-code", label: "Claude Code", blocks: [
-      { note: "Run once in your terminal:", code: `claude mcp add --transport http nyc-open-data ${ENDPOINT}` },
+      { note: "Remote · Run once in your terminal:", code: `claude mcp add --transport http nyc-open-data ${ENDPOINT}` },
+      { note: "Local · Or run the server on your machine over stdio (npx installs it from GitHub and builds it on first run):", code: "claude mcp add --transport stdio nyc-open-data -- npx -y github:frogr/nyc-open-data-mcp" },
     ] },
     { id: "claude-desktop", label: "Claude Desktop", blocks: [
-      { note: "Settings > Connectors > Add custom connector, then paste this URL (custom connectors depend on your plan):", code: ENDPOINT },
-      { note: "Or add this to claude_desktop_config.json and restart (uses the mcp-remote bridge, needs Node):", code: JSON.stringify({ mcpServers: { "nyc-open-data": { command: "npx", args: ["-y", "mcp-remote", ENDPOINT] } } }, null, 2) },
+      { note: "Remote · On a plan with custom connectors: in Settings, open Connectors, choose Add custom connector, and paste:", code: ENDPOINT },
+      { note: "Remote · Or add this to claude_desktop_config.json and restart (uses the mcp-remote bridge, needs Node):", code: cfg({ command: "npx", args: ["-y", "mcp-remote", ENDPOINT] }) },
+      { note: "Local · On any plan: add this to claude_desktop_config.json and restart Claude Desktop.", code: cfg(LOCAL) },
     ] },
     { id: "cursor", label: "Cursor", blocks: [
-      { note: "Add to ~/.cursor/mcp.json (all projects) or .cursor/mcp.json (one project):", code: JSON.stringify({ mcpServers: { "nyc-open-data": { url: ENDPOINT } } }, null, 2) },
+      { note: "Remote · Add to ~/.cursor/mcp.json (all projects) or .cursor/mcp.json (one project):", code: cfg({ url: ENDPOINT }) },
+      { note: "Local · Or run it locally over stdio:", code: cfg(LOCAL) },
     ] },
     { id: "local", label: "Run locally", blocks: [
       { note: "Prefer stdio on your own machine? No server needed. npx installs it from GitHub and builds it on first run:", code: "npx -y github:frogr/nyc-open-data-mcp" },
