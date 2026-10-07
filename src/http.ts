@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Remote entrypoint: serves the MCP endpoint over Streamable HTTP plus the
- * web playground. `npm start` runs this; the npx bin (dist/index.js) stays stdio.
+ * web playground. `npm start` runs this; the package bin (dist/index.js) stays stdio.
  *
  *   PORT=3000 node dist/http.js
  */

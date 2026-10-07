@@ -5,7 +5,7 @@ import { ToolInputError, addDays, ok, todayInNyc, truncate } from "./common.js";
 
 export const SERVICE_REQUESTS_DATASET = "erm2-nwe9";
 
-/** 311 is ~40M rows; unbounded ranges make Socrata time out. */
+/** 311 has ~22.7M rows (count(*) on 2026-10-07); unbounded ranges make Socrata time out. */
 export const MAX_RANGE_DAYS = 366;
 const DEFAULT_RANGE_DAYS = 30;
 

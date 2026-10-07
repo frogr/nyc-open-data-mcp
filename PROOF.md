@@ -60,7 +60,7 @@ GET / -> 200, 33430 bytes, title: NYC Open Data MCP
 HTTP SMOKE OK
 ```
 
-Production start command, checked by hand:
+Production start command:
 
 ```
 $ npm run build && PORT=3999 npm start
@@ -109,6 +109,28 @@ Taken with `npm run screenshots` (Playwright + the preinstalled Chromium) agains
 | `docs/screenshots/connect.png` | Client config tabs (Claude Desktop selected) |
 | `docs/screenshots/phone.png` | Phone width, top of the page |
 | `docs/screenshots/phone-results.png` | Phone width, restaurant results stacked into cards |
+
+## Size of the 311 dataset
+
+```
+$ curl -sS 'https://data.cityofnewyork.us/resource/erm2-nwe9.json?$select=count(*)'
+[{"count":"22715014"}]
+```
+
+Run on 2026-10-07. An earlier code comment said about 40 million; it now says 22.7 million.
+
+## Install from GitHub without npm
+
+The package is not on npm. The README installs it with `npx -y github:frogr/nyc-open-data-mcp`, which works because a `prepare` script runs `npm run build` when npm installs from git. The GitHub repo wasn't public when this was checked, so the same path was tested from a local git URL with an empty npx cache:
+
+```
+$ rm -rf ~/.npm/_npx
+$ echo '{"jsonrpc":"2.0","id":1,"method":"initialize",...}' | npx -y git+file:///home/claude/nyc-open-data-mcp
+nyc-open-data-mcp running on stdio
+{"result":{"protocolVersion":"2025-06-18",...,"serverInfo":{"name":"nyc-open-data","version":"0.2.0"},...}
+```
+
+First start took 16 s (clone, install, TypeScript build). Not checked: the same command against github.com, which needs the repo to be public.
 
 ## Not verified
 

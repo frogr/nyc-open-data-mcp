@@ -544,7 +544,7 @@
       { note: "Add to ~/.cursor/mcp.json (all projects) or .cursor/mcp.json (one project):", code: JSON.stringify({ mcpServers: { "nyc-open-data": { url: ENDPOINT } } }, null, 2) },
     ] },
     { id: "local", label: "Run locally", blocks: [
-      { note: "Prefer stdio on your own machine? No server needed:", code: "npx -y nyc-open-data-mcp" },
+      { note: "Prefer stdio on your own machine? No server needed. npx installs it from GitHub and builds it on first run:", code: "npx -y github:frogr/nyc-open-data-mcp" },
       { note: "Or debug this endpoint with the MCP Inspector: run this, choose Streamable HTTP, and paste the endpoint URL.", code: "npx @modelcontextprotocol/inspector" },
     ] },
   ];

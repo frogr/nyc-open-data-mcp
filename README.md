@@ -1,8 +1,8 @@
 # nyc-open-data-mcp
 
-An [MCP](https://modelcontextprotocol.io) server that gives Claude, Cursor, or any MCP client read-only access to [NYC Open Data](https://opendata.cityofnewyork.us/): 2,400+ city datasets served through the Socrata SODA API. It includes two ready-made tools for the questions people ask most (restaurant health grades and 311 complaints) and two general tools that let the model find and query any other dataset. Inputs are validated, every value placed in a query is escaped, results are paginated and capped in size, upstream errors come back as plain-language hints the model can act on, and the whole thing installs with one line. No API key is required.
+An [MCP](https://modelcontextprotocol.io) server that gives Claude, Cursor, or any MCP client read-only access to [NYC Open Data](https://opendata.cityofnewyork.us/): 2,400+ city datasets served through the Socrata SODA API. It includes two ready-made tools for the questions people ask most (restaurant health grades and 311 complaints) and two general tools that let the model find and query any other dataset. Inputs are validated, every value placed in a query is escaped, results are paginated and capped in size, upstream errors come back as plain-language hints the model can act on. No API key is required.
 
-It runs two ways: over stdio on your own machine (`npx nyc-open-data-mcp`), or as a remote server over Streamable HTTP (the current MCP transport for servers on the web) with a web playground where you can try every tool in a browser. Screenshots of the playground are in [`docs/screenshots/`](docs/screenshots/) and what was verified is in [PROOF.md](PROOF.md).
+It runs two ways: over stdio on your own machine (`npx -y github:frogr/nyc-open-data-mcp`), or as a remote server over Streamable HTTP (the current MCP transport for servers on the web) with a web playground where you can try every tool in a browser. Screenshots of the playground are in [`docs/screenshots/`](docs/screenshots/) and what was verified is in [PROOF.md](PROOF.md).
 
 ![Playground running restaurant_inspections against live data](docs/screenshots/restaurants.png)
 
@@ -22,6 +22,10 @@ It runs two ways: over stdio on your own machine (`npx nyc-open-data-mcp`), or a
 
 Requires Node.js 20 or newer.
 
+The package is not on npm yet. The commands below install it straight from GitHub with `npx -y github:frogr/nyc-open-data-mcp`: npm clones the repo, installs dependencies and builds it (a `prepare` script runs `npm run build`). The first start takes about 20 seconds while that happens, so run it once in a terminal before adding it to a client. If you'd rather not run a build through npx, use [From source](#from-source).
+
+After the package is published to npm, `npx -y nyc-open-data-mcp` will do the same thing. Until then, don't run that name: nothing has been published under it by this project.
+
 ### Claude Desktop
 
 Add this to `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/`, Windows: `%APPDATA%\Claude\`), then restart Claude Desktop:
@@ -31,7 +35,7 @@ Add this to `claude_desktop_config.json` (macOS: `~/Library/Application Support/
   "mcpServers": {
     "nyc-open-data": {
       "command": "npx",
-      "args": ["-y", "nyc-open-data-mcp"],
+      "args": ["-y", "github:frogr/nyc-open-data-mcp"],
       "env": {
         "SOCRATA_APP_TOKEN": "optional-but-recommended"
       }
@@ -43,10 +47,10 @@ Add this to `claude_desktop_config.json` (macOS: `~/Library/Application Support/
 ### Claude Code
 
 ```bash
-claude mcp add --transport stdio nyc-open-data -- npx -y nyc-open-data-mcp
+claude mcp add --transport stdio nyc-open-data -- npx -y github:frogr/nyc-open-data-mcp
 
 # with an app token, available in every project:
-claude mcp add --env SOCRATA_APP_TOKEN=your-token --transport stdio --scope user nyc-open-data -- npx -y nyc-open-data-mcp
+claude mcp add --env SOCRATA_APP_TOKEN=your-token --transport stdio --scope user nyc-open-data -- npx -y github:frogr/nyc-open-data-mcp
 ```
 
 ### Cursor
@@ -58,7 +62,7 @@ Add to `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (this project):
   "mcpServers": {
     "nyc-open-data": {
       "command": "npx",
-      "args": ["-y", "nyc-open-data-mcp"]
+      "args": ["-y", "github:frogr/nyc-open-data-mcp"]
     }
   }
 }
@@ -68,7 +72,7 @@ Add to `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (this project):
 
 ```bash
 git clone https://github.com/frogr/nyc-open-data-mcp && cd nyc-open-data-mcp
-npm install && npm run build
+npm ci   # also builds dist/ through the prepare script
 # then use "command": "node", "args": ["/absolute/path/to/nyc-open-data-mcp/dist/index.js"]
 ```
 
@@ -133,7 +137,7 @@ Every tool is marked `readOnlyHint: true` and declares an `outputSchema`. Result
 
 ## Design notes
 
-**Why these four tools.** The two specific tools cover the questions people actually ask, and they do the awkward parts on the server. The restaurant dataset stores one row per violation, so the tool first groups by restaurant to page through restaurants, then fetches the history for only that page and works out the latest grade. That grade isn't always from the latest inspection: a re-inspection can leave a grade pending. The 311 dataset has about 40M rows, so the tool runs three small aggregate queries (total, group-by, recent samples) on Socrata's side instead of downloading rows. The two general tools are the fallback for everything else, and `search_datasets` returns column names so the model can write a valid `where` clause on its first try.
+**Why these four tools.** The two specific tools cover the questions people actually ask, and they do the awkward parts on the server. The restaurant dataset stores one row per violation, so the tool first groups by restaurant to page through restaurants, then fetches the history for only that page and works out the latest grade. That grade isn't always from the latest inspection: a re-inspection can leave a grade pending. The 311 dataset has about 22.7 million rows, so the tool runs three small aggregate queries (total, group-by, recent samples) on Socrata's side instead of downloading rows. The two general tools are the fallback for everything else, and `search_datasets` returns column names so the model can write a valid `where` clause on its first try.
 
 **Pagination.** Every list result includes `next_offset`, which is `null` on the last page. `query_dataset` fetches `limit + 1` rows so `has_more` is exact rather than guessed.
 
@@ -204,7 +208,7 @@ Tests use hand-built fixtures in `test/fixtures/` that match Socrata's response 
 
 ```
 src/
-  index.ts            stdio entrypoint (the npx bin)
+  index.ts            stdio entrypoint (the package bin)
   http.ts             HTTP entrypoint (npm start): Node adapter, body limit, client IP
   app.ts              routes: /mcp, /health, /, CORS, rate limits, timeouts
   rateLimit.ts        per-IP token bucket and daily cap

@@ -16,6 +16,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/chmod-bin.mjs",
+    "prepare": "npm run build",
     "dev": "tsc -p tsconfig.json --watch",
     "start": "node dist/http.js",
     "start:stdio": "node dist/index.js",
