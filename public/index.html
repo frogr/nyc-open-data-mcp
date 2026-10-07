@@ -4,236 +4,181 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NYC Open Data MCP</title>
-<meta name="description" content="A remote MCP server that lets Claude, Cursor and other AI assistants look up NYC restaurant grades, 311 complaints and 2,400+ city datasets. Try every tool here.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230c110e'/%3E%3Cpath d='M8 23V9l8 10V9m4 14V9h5' stroke='%2346d483' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="description" content="A remote MCP server that lets Claude, Cursor and other AI assistants look up NYC restaurant grades, 311 complaints and 2,400+ city datasets. Ask it a question and watch the tool call, or run every tool here.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23f0a083' transform='rotate(-7 16 16)'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='20' fill='%23131a17'%3En%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/austn-kit.css">
 <style>
-  :root {
-    color-scheme: dark;
-    --bg: #0b0f0d;
-    --surface: #121815;
-    --surface-2: #18201b;
-    --border: #233029;
-    --text: #e4ebe6;
-    --muted: #8d9c93;
-    --faint: #5f6e65;
-    --accent: #46d483;
-    --accent-ink: #062113;
-    --accent-soft: rgba(70, 212, 131, 0.12);
-    --warn: #e2b44c;
-    --bad: #ec7a6b;
-    --radius: 10px;
-    --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  }
-  * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 var(--font); }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  code, pre, .mono { font-family: var(--mono); font-size: 0.86em; }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  /* This page's own styles. Colours and type come from austn-kit.css; nothing here names a hex value. */
+  :root { --accent: var(--clay); }
+  main { padding: 2.5rem 0 4rem; }
+  section { margin-top: 3.5rem; }
+  .sub { color: var(--ink-2); max-width: var(--measure); margin: -0.25rem 0 1.25rem; text-wrap: pretty; }
 
-  header.top { border-bottom: 1px solid var(--border); }
-  header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 16px; }
-  .brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; letter-spacing: -0.01em; }
-  .brand:hover { text-decoration: none; }
-  .brand svg { flex: none; }
-  nav.links { display: flex; gap: 20px; font-size: 14px; }
-  nav.links a { color: var(--muted); }
-  nav.links a:hover { color: var(--text); text-decoration: none; }
+  /* Hero: one column at the measure width. */
+  .hero { max-width: var(--measure); }
+  .hero .lede { margin-bottom: 1.5rem; }
+  .endpoint { display: flex; align-items: stretch; max-width: 34rem; border: 2px solid var(--line); border-radius: var(--radius); background: var(--sunken); overflow: hidden; }
+  .endpoint .endpoint-label { --mono: 1; display: flex; align-items: center; padding: 0.6rem 0.9rem; color: var(--ink-2); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; border-right: 2px solid var(--line); white-space: nowrap; }
+  .endpoint code { flex: 1; display: flex; align-items: center; padding: 0.6rem 0.9rem; background: none; overflow-x: auto; white-space: nowrap; font-size: 0.9rem; }
+  .endpoint .button { border-radius: 0; box-shadow: none; }
+  .hero .pills { margin-top: 1rem; }
 
-  .hero { padding-top: 64px; padding-bottom: 40px; }
-  .eyebrow { color: var(--accent); font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 14px; }
-  h1 { font-size: clamp(32px, 5.2vw, 52px); line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 18px; max-width: 16ch; }
-  .lede { color: var(--muted); font-size: 18px; max-width: 62ch; margin: 0 0 28px; }
-  .lede strong { color: var(--text); font-weight: 500; }
-  .endpoint { display: flex; align-items: stretch; max-width: 560px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
-  .endpoint .label { padding: 12px 14px; color: var(--muted); font-size: 13px; border-right: 1px solid var(--border); white-space: nowrap; display: flex; align-items: center; }
-  .endpoint code { flex: 1; padding: 12px 14px; color: var(--text); overflow-x: auto; white-space: nowrap; display: flex; align-items: center; }
-  .stats { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 22px; color: var(--muted); font-size: 14px; }
-  .stats b { color: var(--text); font-weight: 600; }
+  /* Ask it: a chat built live from one tool call. */
+  .ask-chips { margin-bottom: 1.5rem; }
+  .ask-chips .chip { --casl: 0.6; font-size: 0.9rem; text-align: left; }
+  .chat .result-view { max-height: 26rem; overflow: auto; padding-right: 0.5rem; }
+  .chat .pending { color: var(--ink-3); }
 
-  section { padding: 40px 0; border-top: 1px solid var(--border); }
-  h2 { font-size: 22px; letter-spacing: -0.01em; margin: 0 0 6px; }
-  .sub { color: var(--muted); margin: 0 0 24px; max-width: 68ch; }
+  /* Run a tool: the form and the result side by side. */
+  .runner { display: grid; grid-template-columns: minmax(0, 21rem) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+  form.tool { padding: 1.1rem; display: flex; flex-direction: column; gap: 0.9rem; }
+  .tool-desc { color: var(--ink-2); font-size: 0.88rem; margin: 0; }
+  form.tool .field { margin: 0; }
+  form.tool .field > label { --mono: 1; font-size: 0.8rem; color: var(--ink); display: flex; justify-content: space-between; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .result { min-height: 24rem; display: flex; flex-direction: column; }
+  .result-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.7rem 1rem; border-bottom: 2px dashed var(--line); font-size: 0.86rem; color: var(--ink-2); }
+  .result-head .meta { --mono: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .result-head .meta b { color: var(--ink); font-weight: 700; }
+  .result-body { padding: 1.1rem; overflow: auto; }
+  .empty { color: var(--ink-3); padding: 3.5rem 0.5rem; text-align: center; }
+  .error { --mono: 1; color: var(--bad); white-space: pre-wrap; font-size: 0.84rem; background: var(--ground-2); border-left: 4px solid var(--bad); border-radius: 0 var(--radius) var(--radius) 0; padding: 0.75rem 0.9rem; margin: 0; }
+  .fine { color: var(--ink-2); font-size: 0.86rem; margin: 0.9rem 0 0; }
+  pre.json { margin: 0; font-size: 0.78rem; white-space: pre-wrap; word-break: break-word; }
+  .rlabel { --mono: 1; font-size: 0.72rem; margin: 1.4rem 0 0.6rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+  .rlabel:first-child { margin-top: 0; }
 
-  .examples { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
-  .example { text-align: left; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; cursor: pointer; display: flex; flex-direction: column; gap: 10px; transition: border-color .15s, background .15s; }
-  .example:hover, .example:focus-visible { border-color: var(--accent); background: var(--surface-2); outline: none; }
-  .example q { font-size: 16px; line-height: 1.4; quotes: "\201C" "\201D"; }
-  .example .call { color: var(--faint); font-family: var(--mono); font-size: 12px; line-height: 1.5; word-break: break-word; }
-  .example .call b { color: var(--accent); font-weight: 500; }
-
-  .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; }
-  .tab { font: inherit; font-size: 14px; color: var(--muted); background: transparent; border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
-  .tab:hover { color: var(--text); }
-  .tab[aria-selected="true"] { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); font-weight: 600; }
-  .tab code { font-size: 13px; }
-
-  .runner { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 20px; align-items: start; }
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
-  form.tool { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
-  .tool-desc { color: var(--muted); font-size: 13px; margin: 0; }
-  .field label { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 600; margin-bottom: 5px; font-family: var(--mono); }
-  .field label .req { color: var(--accent); font-family: var(--font); font-weight: 500; font-size: 12px; }
-  .field .help { color: var(--faint); font-size: 12px; margin-top: 4px; line-height: 1.4; }
-  input, select, textarea { width: 100%; font: inherit; font-size: 14px; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-  input[type="checkbox"] { width: auto; accent-color: var(--accent); margin: 0 8px 0 0; }
-  .check { display: flex; align-items: center; font-size: 14px; }
-  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .btn { font: inherit; font-weight: 600; font-size: 15px; color: var(--accent-ink); background: var(--accent); border: 0; border-radius: 8px; padding: 11px 16px; cursor: pointer; }
-  .btn:hover { filter: brightness(1.08); }
-  .btn:disabled { opacity: 0.6; cursor: progress; }
-  .btn-ghost { font: inherit; font-size: 13px; color: var(--muted); background: transparent; border: 1px solid var(--border); border-radius: 7px; padding: 5px 10px; cursor: pointer; }
-  .btn-ghost:hover { color: var(--text); border-color: var(--faint); }
-  .btn-ghost[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
-
-  .result { min-height: 320px; display: flex; flex-direction: column; }
-  .result-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--muted); }
-  .result-head .meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .result-head .meta b { color: var(--text); font-weight: 600; }
-  .result-body { padding: 16px; overflow: auto; }
-  .empty { color: var(--faint); padding: 48px 8px; text-align: center; }
-  .error { color: var(--bad); white-space: pre-wrap; font-family: var(--mono); font-size: 13px; background: rgba(236, 122, 107, 0.08); border: 1px solid rgba(236, 122, 107, 0.3); border-radius: 8px; padding: 12px 14px; margin: 0; }
-  .note { color: var(--muted); font-size: 13px; margin: 14px 0 0; }
-  pre.json { margin: 0; color: #cfe3d6; font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
-
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  tr:last-child td { border-bottom: 0; }
-  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-  td .small { color: var(--muted); font-size: 12.5px; }
+  /* Tables in results. */
   .scroll-x { overflow-x: auto; }
-  .grade { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; font-weight: 700; border: 2px solid currentColor; }
-  .grade.A { color: var(--accent); }
-  .grade.B { color: var(--warn); }
+  td .small { color: var(--ink-2); font-size: 0.82rem; }
+  th.num, td.num { text-align: right; }
+  .grade { --casl: 1; display: inline-grid; place-items: center; width: 2rem; height: 2rem; border-radius: 0.4rem; font-weight: 900; border: 2px solid currentColor; transform: rotate(-4deg); }
+  .grade.A { color: var(--good); }
+  .grade.B { color: var(--close); }
   .grade.C { color: var(--bad); }
-  .grade.other { color: var(--muted); font-size: 12px; }
-  .pill { display: inline-block; font-size: 11.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
-  .pill.crit { color: var(--bad); border-color: rgba(236, 122, 107, 0.4); }
-  details.viol summary { cursor: pointer; color: var(--muted); font-size: 12.5px; }
-  details.viol ul { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--muted); }
-  details.viol li { margin-bottom: 4px; }
+  .grade.other { color: var(--ink-3); font-size: 0.8rem; }
+  details.viol summary { cursor: pointer; color: var(--ink-2); font-size: 0.84rem; }
+  details.viol ul { margin: 0.4rem 0 0; padding-left: 1.1rem; font-size: 0.84rem; color: var(--ink-2); }
+  details.viol li { margin-bottom: 0.3rem; }
 
-  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
-  .kpi { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; min-width: 140px; }
-  .kpi .v { font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; }
-  .kpi .k { color: var(--muted); font-size: 12px; }
-  .bar { position: relative; height: 6px; background: var(--surface-2); border-radius: 3px; margin-top: 6px; min-width: 60px; }
-  .bar span { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 3px; }
-  h3 { font-size: 14px; margin: 22px 0 8px; color: var(--muted); font-weight: 600; }
-  h3:first-child { margin-top: 0; }
+  /* Small numbers inside a result. */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 0.6rem; margin-bottom: 0.5rem; }
+  .kpi { background: var(--sunken); border: 2px solid var(--line); border-radius: var(--radius); padding: 0.6rem 0.8rem; }
+  .kpi .v { --casl: 1; font-size: 1.3rem; font-weight: 900; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .kpi .v.small-v { font-size: 0.95rem; padding-top: 0.25rem; }
+  .kpi .k { color: var(--ink-2); font-size: 0.78rem; margin-top: 0.2rem; }
 
-  .connect { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  /* Tools: one row each, from the server's own descriptions. */
+  .tools .row { grid-template-columns: minmax(0, 1fr); }
+  .tools .row-title { --mono: 1; font-size: 0.98rem; }
+  .tools .row-summary { font-size: 0.92rem; }
+  .tools .row-args { --mono: 1; font-size: 0.74rem; color: var(--ink-3); }
+
+  /* Connect snippets */
+  .connect { display: grid; gap: 0.75rem; }
   .snippet { position: relative; }
-  .snippet pre { margin: 0; padding: 16px 18px; padding-right: 76px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; color: #cfe3d6; font-size: 13px; line-height: 1.6; }
-  .snippet .copy { position: absolute; top: 10px; right: 10px; }
-  .snippet-note { color: var(--muted); font-size: 14px; margin: 4px 0 12px; }
+  .snippet pre { margin: 0; padding-right: 5.5rem; }
+  .snippet .copy { position: absolute; top: 0.6rem; right: 0.6rem; }
+  .snippet-note { color: var(--ink-2); font-size: 0.92rem; margin: 0.25rem 0 0.5rem; }
 
-  footer { border-top: 1px solid var(--border); padding: 32px 0 48px; color: var(--muted); font-size: 14px; }
-  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; }
-
-  @media (max-width: 820px) {
+  @media (max-width: 900px) {
     .runner { grid-template-columns: minmax(0, 1fr); }
   }
   @media (max-width: 560px) {
-    .wrap { padding: 0 16px; }
-    nav.links a.hide-sm { display: none; }
-    .hero { padding-top: 40px; padding-bottom: 28px; }
-    .lede { font-size: 16px; }
-    .endpoint .label { display: none; }
-    .examples { grid-template-columns: minmax(0, 1fr); }
+    .site-nav a.hide-sm { display: none; }
+    .endpoint .endpoint-label { display: none; }
     .row-2 { grid-template-columns: minmax(0, 1fr); }
-    section { padding: 32px 0; }
-    .result-body { padding: 12px 14px; }
+    .result-body { padding: 0.9rem; }
     table.stack thead { display: none; }
-    table.stack tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    table.stack tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.25rem; padding: 0.75rem 0; border-bottom: 2px dashed var(--line); }
     table.stack tr:last-child { border-bottom: 0; }
     table.stack td { border: 0; padding: 0; }
-    table.stack.lead tr { grid-template-columns: 40px minmax(0, 1fr); column-gap: 12px; }
+    table.stack.lead tr { grid-template-columns: 2.4rem minmax(0, 1fr); column-gap: 0.75rem; }
     table.stack.lead td:first-child { grid-row: span 3; }
     table.stack.lead td:not(:first-child) { grid-column: 2; }
   }
 </style>
 </head>
 <body>
-<header class="top">
-  <div class="wrap">
-    <a class="brand" href="/">
-      <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#18201b"/><path d="M8 23V9l8 10V9m4 14V9h5" stroke="#46d483" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      nyc-open-data-mcp
-    </a>
-    <nav class="links">
-      <a href="#try">Try it</a>
-      <a href="#connect">Connect</a>
-      <a class="hide-sm" href="https://github.com/frogr/nyc-open-data-mcp">GitHub</a>
+<header class="site-header">
+  <div class="wrap wrap--wide">
+    <a class="mark" href="/" aria-label="NYC Open Data MCP, home"><span class="mark-glyph" aria-hidden="true">n</span><span class="mark-name">nyc-open-data-mcp</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="#ask">Ask it</a></li>
+        <li><a href="#try">Run a tool</a></li>
+        <li><a href="#tools">Tools</a></li>
+        <li><a href="#connect">Connect</a></li>
+        <li><a class="hide-sm" href="https://github.com/frogr/nyc-open-data-mcp">GitHub</a></li>
+      </ul>
     </nav>
   </div>
 </header>
 
-<main>
-  <div class="wrap hero">
-    <p class="eyebrow">Remote MCP server</p>
-    <h1>NYC Open Data for your AI assistant</h1>
-    <p class="lede">
-      <strong>MCP</strong> (Model Context Protocol) is the open standard that lets AI apps like Claude and Cursor call outside tools.
-      This server gives them read-only access to <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a>:
-      restaurant health grades, 311 complaints, and the rest of the city's 2,400+ public datasets. No API key needed.
-    </p>
-    <div class="endpoint">
-      <span class="label">Endpoint</span>
-      <code id="endpoint-url">/mcp</code>
-      <button class="btn-ghost" data-copy="#endpoint-url" style="border:0;border-left:1px solid var(--border);border-radius:0;padding:0 16px">Copy</button>
+<main id="main">
+  <div class="wrap wrap--wide">
+    <div class="hero">
+      <p class="label">Remote MCP server</p>
+      <h1 class="squiggle">NYC Open Data for your AI assistant</h1>
+      <p class="lede">
+        MCP (Model Context Protocol) is the open standard that lets AI apps like Claude and Cursor call outside tools.
+        This server gives them read-only access to <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a>:
+        restaurant health grades, 311 complaints, and the rest of the city's 2,400+ public datasets. No API key needed.
+      </p>
+      <div class="endpoint">
+        <span class="endpoint-label">Endpoint</span>
+        <code id="endpoint-url">/mcp</code>
+        <button class="button button--quiet button--small" id="copy-endpoint" type="button">Copy</button>
+      </div>
+      <ul class="pills" aria-label="Facts">
+        <li class="pill pill--accent">4 read-only tools</li>
+        <li class="pill">Streamable HTTP</li>
+        <li class="pill" id="health-stat">Checking health...</li>
+      </ul>
     </div>
-    <div class="stats" id="stats">
-      <span><b>4</b> read-only tools</span>
-      <span>Streamable HTTP, stateless</span>
-      <span id="health-stat">Checking health...</span>
-    </div>
-  </div>
 
-  <section id="examples">
-    <div class="wrap">
-      <h2>Example questions</h2>
-      <p class="sub">In Claude you just ask the question. Here you can see the tool call it turns into, and run it against live city data.</p>
-      <div class="examples" id="example-list"></div>
-    </div>
-  </section>
+    <section id="ask" aria-labelledby="ask-title">
+      <h2 class="section-title" id="ask-title">ask it</h2>
+      <p class="sub">In Claude you type the question. Pick one here to watch what happens underneath: the tool call it becomes, the real result from live city data, and what the assistant can say once it has that in hand.</p>
+      <div class="chips ask-chips" id="ask-chips" role="tablist" aria-label="Example questions"></div>
+      <ol class="chat" id="ask-chat" hidden aria-live="polite"></ol>
+    </section>
 
-  <section id="try">
-    <div class="wrap">
-      <h2>Run a tool</h2>
-      <p class="sub">The same four tools your assistant sees. The form is built from each tool's input schema, and every call goes through the real MCP endpoint.</p>
-      <div class="tabs" role="tablist" id="tool-tabs"></div>
-      <div class="runner">
+    <section id="try" aria-labelledby="try-title">
+      <h2 class="section-title" id="try-title">run a tool</h2>
+      <p class="sub">The same four tools your assistant sees. Each form is built from the tool's input schema, and every call goes through the real MCP endpoint.</p>
+      <div class="chips" role="tablist" id="tool-tabs" aria-label="Tools"></div>
+      <div class="runner" style="margin-top: 1rem;">
         <div class="panel"><form class="tool" id="tool-form" novalidate></form></div>
         <div class="panel result" aria-live="polite">
           <div class="result-head">
             <span class="meta" id="result-meta">No results yet</span>
-            <button type="button" class="btn-ghost" id="json-toggle" aria-pressed="false" disabled>Raw JSON</button>
+            <button type="button" class="button button--quiet button--tiny" id="json-toggle" aria-pressed="false" disabled>Raw JSON</button>
           </div>
-          <div class="result-body" id="result-body"><div class="empty">Pick an example above or fill in the form and press Run.</div></div>
+          <div class="result-body" id="result-body"><div class="empty">Pick a question above, or fill in the form and press Run.</div></div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section id="connect">
-    <div class="wrap">
-      <h2>Connect your client</h2>
+    <section id="tools" aria-labelledby="tools-title">
+      <h2 class="section-title" id="tools-title">what your assistant gets</h2>
+      <p class="sub">Four tools, read-only, each described to the model in its own words below. The descriptions are read live from the server, so this list can't drift from what Claude sees. A <code>?</code> marks an optional argument.</p>
+      <ul class="rows tools" id="tool-list"></ul>
+    </section>
+
+    <section id="connect" aria-labelledby="connect-title">
+      <h2 class="section-title" id="connect-title">connect your client</h2>
       <p class="sub">Point any MCP client at the endpoint above. Pick yours:</p>
-      <div class="tabs" role="tablist" id="client-tabs"></div>
-      <div class="connect" id="client-body"></div>
-    </div>
-  </section>
+      <div class="chips" role="tablist" id="client-tabs" aria-label="Clients"></div>
+      <div class="connect" id="client-body" style="margin-top: 1rem;"></div>
+    </section>
+  </div>
 </main>
 
-<footer>
-  <div class="wrap">
-    <span>Data from <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a> via the Socrata API. Not affiliated with the City of New York.</span>
-    <span><a href="https://github.com/frogr/nyc-open-data-mcp">Source (MIT)</a> &middot; Need an MCP server for your own API? <a href="https://austn.net">austn.net</a></span>
+<footer class="site-footer">
+  <div class="wrap wrap--wide">
+    <span>Data from <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a> via the Socrata API. Not affiliated with the City of New York. <a href="https://github.com/frogr/nyc-open-data-mcp">Source (MIT)</a>.</span>
+    <span class="maker">Made by <a href="https://austn.net">Austin French</a>. Need an MCP server for your own data? <a href="https://austn.net/hire">Here's how that works</a>.</span>
   </div>
 </footer>
 
@@ -296,15 +241,9 @@
     return body.result;
   }
 
-  // ---------- examples ----------
   function formatCall(tool, args) {
     const parts = Object.entries(args).map(([k, v]) => `${k}: ${JSON.stringify(v)}`);
-    return h("span", { class: "call" }, h("b", {}, tool), `(${parts.join(", ")})`);
-  }
-  for (const ex of EXAMPLES) {
-    $("#example-list").append(
-      h("button", { type: "button", class: "example", onclick: () => runExample(ex) }, h("q", {}, ex.q), formatCall(ex.tool, ex.args)),
-    );
+    return h("code", {}, h("b", {}, tool), `(${parts.join(", ")})`);
   }
 
   // ---------- tool forms ----------
@@ -346,8 +285,8 @@
     const paging = names.filter((n) => n === "limit" || n === "offset");
     for (const n of names) if (!paging.includes(n)) form.append(fieldFor(n, props[n], required.has(n)));
     if (paging.length) form.append(h("div", { class: "row-2" }, paging.map((n) => fieldFor(n, props[n], required.has(n)))));
-    form.append(h("button", { type: "submit", class: "btn" }, "Run ", tool.name));
-    for (const b of document.querySelectorAll("#tool-tabs .tab")) b.setAttribute("aria-selected", String(b.dataset.tool === tool.name));
+    form.append(h("button", { type: "submit", class: "button" }, "Run ", tool.name));
+    for (const b of document.querySelectorAll("#tool-tabs .chip")) b.setAttribute("aria-selected", String(b.dataset.tool === tool.name));
   }
 
   function readArgs() {
@@ -374,15 +313,6 @@
 
   $("#tool-form").addEventListener("submit", (e) => { e.preventDefault(); run(current.name, readArgs()); });
 
-  function runExample(ex) {
-    const tool = tools.find((t) => t.name === ex.tool);
-    if (!tool) return;
-    renderForm(tool);
-    fillArgs(ex.args);
-    $("#try").scrollIntoView({ behavior: "smooth", block: "start" });
-    run(ex.tool, ex.args);
-  }
-
   // ---------- running + results ----------
   let last = null;
   let showJson = false;
@@ -394,7 +324,7 @@
   });
 
   async function run(name, args) {
-    const btn = $("#tool-form .btn");
+    const btn = $("#tool-form .button");
     btn.disabled = true;
     btn.textContent = "Running...";
     $("#result-meta").textContent = `Calling ${name}...`;
@@ -433,15 +363,18 @@
       body.append(h("pre", { class: "json" }, JSON.stringify(showJson ? r : data ?? r, null, 2)));
       return;
     }
-    const render = RENDERERS[last.name] || renderRows;
-    body.append(render(data));
-    if (data.note) body.append(h("p", { class: "note" }, data.note));
+    body.append(RENDERERS[last.name](data));
+    if (data.note) body.append(h("p", { class: "fine" }, data.note));
   }
 
   function safeParse(s) { try { return JSON.parse(s); } catch { return null; } }
   const fmt = (n) => Number(n).toLocaleString("en-US");
   const day = (s) => (s ? String(s).slice(0, 10) : "");
   const nothing = (msg) => h("div", { class: "empty" }, msg);
+  const list = (items) => (items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`);
+  const plural = (n, word) => `${fmt(n)} ${word}${n === 1 ? "" : "s"}`;
+  /** A cell value as plain text: numbers get thousands separators. */
+  const cellText = (v) => (v == null ? "" : typeof v === "object" ? JSON.stringify(v) : /^-?\d+(\.\d+)?$/.test(String(v)) ? fmt(v) : String(v));
 
   function table(headers, rows, cls) {
     return h("div", { class: "scroll-x" }, h("table", { class: cls || null },
@@ -449,9 +382,96 @@
       h("tbody", {}, rows)));
   }
 
+  function bars(items, label, value) {
+    const max = Math.max(...items.map(value), 1);
+    return h("div", { class: "bars" }, items.map((it) =>
+      h("div", { class: "bar-row" },
+        h("span", { class: "lbl", title: label(it) }, label(it)),
+        h("div", { class: "bar" }, h("i", { style: `--w:${(value(it) / max) * 100}%` })),
+        h("span", { class: "num" }, fmt(value(it))))));
+  }
+
   function gradeBadge(g) {
     if (!g) return h("span", { class: "grade other" }, "–");
     return h("span", { class: `grade ${"ABC".includes(g) ? g : "other"}`, title: g }, g);
+  }
+
+  // ---------- what the assistant can say, written by this page from the result ----------
+  // These sentences are built from the result's fields by code, so you can see exactly what
+  // the model has to work with. In Claude, the model writes this part.
+  const SAY = {
+    restaurant_inspections(d, args) {
+      if (!d.restaurants.length) return "I couldn't find a restaurant matching that in the city's inspection records.";
+      const top = d.restaurants.slice(0, 3).map((r) => `${r.name} (${!r.latest_grade ? "not graded yet" : "ABC".includes(r.latest_grade) ? `grade ${r.latest_grade}` : (r.latest_grade_meaning || r.latest_grade).toLowerCase()})`);
+      const place = args.zip_code ? ` in ${args.zip_code}` : "";
+      const more = d.has_more ? " There are more beyond these." : "";
+      return `I found ${plural(d.returned, "restaurant")}${place}${d.has_more ? " on this page" : ""}. The first ${d.restaurants.length < 3 ? "is" : "three are"} ${list(top)}.${more}`;
+    },
+    service_requests_311(d) {
+      const f = d.filters || {};
+      const where = f.zip_codes && f.zip_codes.length ? ` in ${list(f.zip_codes)}` : f.borough ? ` in ${f.borough}` : "";
+      const when = `from ${d.date_range.start} to ${d.date_range.end}`;
+      if (!d.total_requests) return `There were no 311 requests${where} ${when}.`;
+      const top = d.top_complaint_types.slice(0, 3).map((t) => `${t.complaint_type} (${fmt(t.count)})`);
+      return `There were ${fmt(d.total_requests)} requests to 311${where} ${when}. The most common ${top.length === 1 ? "type was" : "types were"} ${list(top)}.`;
+    },
+    search_datasets(d) {
+      if (!d.datasets.length) return "I couldn't find a dataset matching that in the NYC Open Data catalog.";
+      const x = d.datasets[0];
+      const cols = x.columns && x.columns.length ? ` It has ${plural(x.columns.length, "column")}.` : "";
+      return `${plural(d.total, "dataset")} matched. The first is “${x.name}”, id ${x.id}.${cols} I can query it for you.`;
+    },
+    query_dataset(d) {
+      if (!d.rows.length) return "That query came back with no rows.";
+      const rows = d.rows.slice(0, 3).map((r) => Object.entries(r).map(([k, v]) => `${k} ${cellText(v)}`).join(", "));
+      const more = d.has_more ? ` More rows are available from offset ${d.next_offset}.` : " That is every row the query matched.";
+      return `The query returned ${plural(d.returned, "row")}. The first ${rows.length === 1 ? "is" : `${rows.length} are`}: ${rows.join("; ")}.${more}`;
+    },
+  };
+
+  // ---------- Ask it ----------
+  let askRun = 0;
+  for (const [i, ex] of EXAMPLES.entries()) {
+    $("#ask-chips").append(h("button", { type: "button", class: "chip", role: "tab", "aria-selected": "false", "data-i": i, onclick: () => ask(i) }, ex.q));
+  }
+
+  async function ask(i) {
+    const ex = EXAMPLES[i];
+    const run = ++askRun;
+    for (const b of document.querySelectorAll("#ask-chips .chip")) b.setAttribute("aria-selected", String(Number(b.dataset.i) === i));
+    const chat = $("#ask-chat");
+    chat.hidden = false;
+    const result = h("li", { class: "chat-result" }, h("span", { class: "chat-who" }, "nyc-open-data-mcp returns"), h("p", { class: "pending" }, "Calling live city data..."));
+    const them = h("li", { class: "chat-them" }, h("span", { class: "chat-who" }, "Claude can now say"), h("p", { class: "pending" }, "..."));
+    chat.replaceChildren(
+      h("li", { class: "chat-you" }, h("span", { class: "chat-who" }, "You"), h("p", {}, ex.q)),
+      h("li", { class: "chat-tool" }, h("span", { class: "chat-who" }, "Claude calls"), formatCall(ex.tool, ex.args)),
+      result,
+      them,
+      h("li", { class: "chat-foot" }, "The last line is written by this page from the result's fields, so you can see what the model has to work with. In Claude, the model writes it, and the result is what keeps it honest."),
+    );
+    const t0 = performance.now();
+    try {
+      const res = await rpc("tools/call", { name: ex.tool, arguments: ex.args });
+      if (run !== askRun) return;
+      const data = res.structuredContent ?? safeParse(res.content?.[0]?.text);
+      if (res.isError || !data) {
+        result.replaceChildren(h("span", { class: "chat-who" }, "nyc-open-data-mcp returns"), h("p", { class: "error" }, res.content?.[0]?.text ?? "No structured result"));
+        them.replaceChildren(h("span", { class: "chat-who" }, "Claude can now say"), h("p", {}, "Something went wrong with that lookup, so I won't guess. Here is what the tool said: ", res.content?.[0]?.text ?? ""));
+        return;
+      }
+      const ms = Math.round(performance.now() - t0);
+      result.replaceChildren(h("span", { class: "chat-who" }, `nyc-open-data-mcp returns · ${fmt(ms)} ms`), h("div", { class: "result-view" }, RENDERERS[ex.tool](data)));
+      them.replaceChildren(h("span", { class: "chat-who" }, "Claude can now say"), h("p", {}, SAY[ex.tool](data, ex.args)));
+      last = { name: ex.tool, args: ex.args, result: res, ms };
+      toggle.disabled = false;
+      const tool = tools.find((t) => t.name === ex.tool);
+      if (tool) { renderForm(tool); fillArgs(ex.args); paint(); }
+    } catch (err) {
+      if (run !== askRun) return;
+      result.replaceChildren(h("span", { class: "chat-who" }, "nyc-open-data-mcp returns"), h("p", { class: "error" }, err.message));
+      them.replaceChildren(h("span", { class: "chat-who" }, "Claude can now say"), h("p", {}, "The city data didn't answer, so I can't check this right now. I'd rather tell you that than guess."));
+    }
   }
 
   const RENDERERS = {
@@ -468,12 +488,12 @@
             li ? [h("div", {}, day(li.date), li.score != null ? ` · ${li.score} pts` : ""), h("div", { class: "small" }, li.type || "")] : h("span", { class: "small" }, "Not yet inspected"),
             li && li.violations.length
               ? h("details", { class: "viol" },
-                  h("summary", {}, `${li.violation_count} violation${li.violation_count === 1 ? "" : "s"}`, crit ? " · " : "", crit ? h("span", { class: "pill crit" }, `${crit} critical`) : null),
-                  h("ul", {}, li.violations.map((v) => h("li", {}, v.critical ? h("span", { class: "pill crit" }, "critical") : null, " ", v.description || v.code))))
+                  h("summary", {}, `${li.violation_count} violation${li.violation_count === 1 ? "" : "s"}`, crit ? " · " : "", crit ? h("span", { class: "pill pill--bad" }, `${crit} critical`) : null),
+                  h("ul", {}, li.violations.map((v) => h("li", {}, v.critical ? h("span", { class: "pill pill--bad" }, "critical") : null, " ", v.description || v.code))))
               : null));
       });
       return h("div", {}, table([{ label: "Grade" }, { label: "Restaurant" }, { label: "Latest grade" }, { label: "Latest inspection" }], rows, "stack lead"),
-        d.has_more ? h("p", { class: "note" }, `More results: set offset to ${d.next_offset}.`) : null);
+        d.has_more ? h("p", { class: "fine" }, `More results: set offset to ${d.next_offset}.`) : null);
     },
 
     service_requests_311(d) {
@@ -482,18 +502,13 @@
       const out = h("div", {},
         h("div", { class: "kpis" },
           h("div", { class: "kpi" }, h("div", { class: "v" }, fmt(d.total_requests)), h("div", { class: "k" }, "311 requests")),
-          h("div", { class: "kpi" }, h("div", { class: "v", style: "font-size:15px;padding-top:5px" }, `${d.date_range.start} to ${d.date_range.end}`), h("div", { class: "k" }, where))));
+          h("div", { class: "kpi" }, h("div", { class: "v small-v" }, `${d.date_range.start} to ${d.date_range.end}`), h("div", { class: "k" }, where))));
       if (!d.total_requests) { out.append(nothing("No requests in this window.")); return out; }
-      const max = Math.max(...d.top_complaint_types.map((t) => t.count), 1);
-      out.append(h("h3", {}, "Top complaint types"),
-        table([{ label: "Complaint type" }, { label: "Requests", num: true }, { label: "Share", num: true }],
-          d.top_complaint_types.map((t) => h("tr", {},
-            h("td", {}, t.complaint_type, h("div", { class: "bar" }, h("span", { style: `width:${(t.count / max) * 100}%` }))),
-            h("td", { class: "num" }, fmt(t.count)),
-            h("td", { class: "num" }, `${(t.share * 100).toFixed(1)}%`)))));
-      if (d.other_types_count) out.append(h("p", { class: "note" }, `${fmt(d.other_types_count)} more requests across other complaint types.`));
+      out.append(h("h3", { class: "rlabel" }, "Top complaint types"),
+        bars(d.top_complaint_types, (t) => t.complaint_type, (t) => t.count));
+      if (d.other_types_count) out.append(h("p", { class: "fine" }, `${fmt(d.other_types_count)} more requests across other complaint types.`));
       if (d.samples.length) {
-        out.append(h("h3", {}, "Most recent requests"),
+        out.append(h("h3", { class: "rlabel" }, "Most recent requests"),
           table([{ label: "Created" }, { label: "Complaint" }, { label: "Where" }, { label: "Status" }],
             d.samples.map((s) => h("tr", {},
               h("td", {}, day(s.created_date)),
@@ -507,7 +522,7 @@
     search_datasets(d) {
       if (!d.datasets.length) return nothing("No datasets matched.");
       return h("div", {},
-        h("p", { class: "note", style: "margin:0 0 12px" }, `${fmt(d.total)} matching datasets`),
+        h("p", { class: "fine", style: "margin:0 0 0.9rem" }, `${fmt(d.total)} matching datasets`),
         table([{ label: "Dataset" }, { label: "Id" }, { label: "Category" }, { label: "Updated" }],
           d.datasets.map((x) => h("tr", {},
             h("td", {}, x.url ? h("a", { href: x.url, target: "_blank", rel: "noopener" }, x.name) : x.name, x.description ? h("div", { class: "small" }, x.description) : null),
@@ -516,20 +531,17 @@
             h("td", { style: "white-space:nowrap" }, day(x.updated_at)))), "stack"));
     },
 
-    query_dataset: (d) => renderRows(d),
+    query_dataset(d) {
+      const rows = d.rows || [];
+      if (!rows.length) return nothing("No rows.");
+      const cols = [...new Set(rows.flatMap((r) => Object.keys(r)))].slice(0, 12);
+      const isNum = (c) => rows.every((r) => r[c] == null || /^-?\d+(\.\d+)?$/.test(String(r[c])));
+      return h("div", {},
+        h("p", { class: "fine", style: "margin:0 0 0.9rem" }, `${plural(rows.length, "row")}${d.has_more && !d.note ? `, more available from offset ${d.next_offset}` : ""}`),
+        table(cols.map((c) => ({ label: c, num: isNum(c) })),
+          rows.map((r) => h("tr", {}, cols.map((c) => h("td", { class: isNum(c) ? "num" : null }, cellText(r[c])))))));
+    },
   };
-
-  function renderRows(d) {
-    const rows = d.rows || [];
-    if (!rows.length) return nothing("No rows.");
-    const cols = [...new Set(rows.flatMap((r) => Object.keys(r)))].slice(0, 12);
-    const isNum = (c) => rows.every((r) => r[c] == null || /^-?\d+(\.\d+)?$/.test(String(r[c])));
-    const cell = (v) => (v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v));
-    return h("div", {},
-      h("p", { class: "note", style: "margin:0 0 12px" }, `${rows.length} row${rows.length === 1 ? "" : "s"}${d.has_more && !d.note ? `, more available from offset ${d.next_offset}` : ""}`),
-      table(cols.map((c) => ({ label: c, num: isNum(c) })),
-        rows.map((r) => h("tr", {}, cols.map((c) => h("td", { class: isNum(c) ? "num" : null }, isNum(c) && r[c] != null ? fmt(r[c]) : cell(r[c])))))));
-  }
 
   // ---------- connect snippets ----------
   const CLIENTS = [
@@ -550,13 +562,13 @@
   ];
 
   function renderClient(c) {
-    for (const b of document.querySelectorAll("#client-tabs .tab")) b.setAttribute("aria-selected", String(b.dataset.client === c.id));
+    for (const b of document.querySelectorAll("#client-tabs .chip")) b.setAttribute("aria-selected", String(b.dataset.client === c.id));
     $("#client-body").replaceChildren(...c.blocks.map((b) =>
       h("div", {}, h("p", { class: "snippet-note" }, b.note),
-        h("div", { class: "snippet" }, h("pre", {}, h("code", {}, b.code)), h("button", { type: "button", class: "btn-ghost copy", onclick: (e) => copy(b.code, e.currentTarget) }, "Copy")))));
+        h("div", { class: "snippet" }, h("pre", {}, h("code", {}, b.code)), h("button", { type: "button", class: "button button--quiet button--tiny copy", onclick: (e) => copy(b.code, e.currentTarget) }, "Copy")))));
   }
   for (const c of CLIENTS) {
-    $("#client-tabs").append(h("button", { type: "button", class: "tab", role: "tab", "data-client": c.id, onclick: () => renderClient(c) }, c.label));
+    $("#client-tabs").append(h("button", { type: "button", class: "chip", role: "tab", "data-client": c.id, onclick: () => renderClient(c) }, c.label));
   }
   renderClient(CLIENTS[0]);
 
@@ -566,17 +578,24 @@
     setTimeout(() => (btn.textContent = "Copy"), 1500);
   }
   $("#endpoint-url").textContent = ENDPOINT;
-  document.querySelector("[data-copy]").addEventListener("click", (e) => copy(ENDPOINT, e.currentTarget));
+  $("#copy-endpoint").addEventListener("click", (e) => copy(ENDPOINT, e.currentTarget));
 
   // ---------- boot ----------
   fetch("/health").then((r) => r.json()).then((hl) => {
-    $("#health-stat").replaceChildren(h("b", {}, "Healthy"), ` · v${hl.version} · ${hl.limits.per_ip_per_minute} calls/min per visitor`);
+    $("#health-stat").replaceChildren(`Healthy · v${hl.version} · ${hl.limits.per_ip_per_minute} calls/min per visitor`);
+    $("#health-stat").classList.add("pill--good");
   }).catch(() => { $("#health-stat").textContent = "Health check failed"; });
 
   rpc("tools/list", {}).then((res) => {
     tools = res.tools;
     for (const t of tools) {
-      $("#tool-tabs").append(h("button", { type: "button", class: "tab", role: "tab", "data-tool": t.name, onclick: () => renderForm(t) }, h("code", {}, t.name)));
+      $("#tool-tabs").append(h("button", { type: "button", class: "chip", role: "tab", "data-tool": t.name, onclick: () => renderForm(t) }, h("code", {}, t.name)));
+      const props = Object.keys(t.inputSchema.properties || {});
+      const req = new Set(t.inputSchema.required || []);
+      $("#tool-list").append(h("li", {}, h("div", { class: "row" },
+        h("span", { class: "row-title" }, t.name),
+        h("span", { class: "row-summary" }, t.description),
+        h("span", { class: "row-args" }, props.map((p) => (req.has(p) ? p : `${p}?`)).join("  ")))));
     }
     const preferred = tools.find((t) => t.name === "restaurant_inspections") || tools[0];
     renderForm(preferred);

@@ -4,6 +4,7 @@
  *
  * Routes:
  *   GET  /          web playground (public/index.html)
+ *   GET  /austn-kit.css, /fonts/recursive-latin.woff2   the playground's stylesheet and font
  *   GET  /health    liveness + config summary, never calls Socrata
  *   POST /mcp       MCP Streamable HTTP, stateless, JSON responses
  *   OPTIONS *       CORS preflight
@@ -67,6 +68,12 @@ const PLAYGROUND_HTML = readFileSync(new URL("../public/index.html", import.meta
 
 const CORS_ALLOW_HEADERS = "Content-Type, Accept, Authorization, Mcp-Session-Id, Mcp-Protocol-Version, Last-Event-ID";
 const CORS_EXPOSE_HEADERS = "Mcp-Session-Id, Mcp-Protocol-Version, Retry-After, RateLimit-Remaining";
+
+/** The playground's stylesheet (austn.net's design system) and its font, read once at startup. Only these two paths are served. */
+const PLAYGROUND_ASSETS = new Map<string, { body: Buffer; type: string }>([
+  ["/austn-kit.css", { body: readFileSync(new URL("../public/austn-kit.css", import.meta.url)), type: "text/css; charset=utf-8" }],
+  ["/fonts/recursive-latin.woff2", { body: readFileSync(new URL("../public/fonts/recursive-latin.woff2", import.meta.url)), type: "font/woff2" }],
+]);
 
 const PAGE_CSP = [
   "default-src 'self'",
@@ -198,6 +205,15 @@ export function createApp(opts: AppOptions): Handler {
             "Referrer-Policy": "no-referrer",
             "Cache-Control": "public, max-age=300",
           },
+        });
+      }
+
+      const asset = PLAYGROUND_ASSETS.get(url.pathname);
+      if (asset) {
+        if (req.method !== "GET" && req.method !== "HEAD") return text(405, "Method not allowed");
+        return new Response(req.method === "HEAD" ? null : new Uint8Array(asset.body), {
+          status: 200,
+          headers: { "Content-Type": asset.type, "X-Content-Type-Options": "nosniff", "Cache-Control": "public, max-age=86400" },
         });
       }
 

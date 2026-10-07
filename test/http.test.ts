@@ -222,6 +222,21 @@ describe("other routes", () => {
     expect(html).toContain("NYC Open Data for your AI assistant");
   });
 
+  it("serves the stylesheet and font the playground loads, and nothing else from public/", async () => {
+    const handler = app();
+    const css = await handler(new Request("http://test.local/austn-kit.css"), local);
+    expect(css.status).toBe(200);
+    expect(css.headers.get("content-type")).toMatch(/text\/css/);
+    expect(await css.text()).toContain("font-family: \"Recursive\"");
+    const font = await handler(new Request("http://test.local/fonts/recursive-latin.woff2"), local);
+    expect(font.status).toBe(200);
+    expect(font.headers.get("content-type")).toBe("font/woff2");
+    expect((await font.arrayBuffer()).byteLength).toBeGreaterThan(1000);
+    expect((await handler(new Request("http://test.local/austn-kit.css", { method: "POST" }), local)).status).toBe(405);
+    expect((await handler(new Request("http://test.local/fonts/other.woff2"), local)).status).toBe(404);
+    expect((await handler(new Request("http://test.local/public/index.html"), local)).status).toBe(404);
+  });
+
   it("404s unknown paths with a pointer to the right ones", async () => {
     const res = await app()(new Request("http://test.local/sse"), local);
     expect(res.status).toBe(404);
