@@ -1,0 +1,9 @@
+{
+  "code" : "query.compiler.malformed",
+  "error" : true,
+  "message" : "Could not parse SoQL query \"select * where bogus = limit 6 offset 0\" at line 1 character 24: Expected an expression, but got `LIMIT'",
+  "data" : {
+    "query" : "select * where bogus = limit 6 offset 0",
+    "position" : { }
+  }
+}

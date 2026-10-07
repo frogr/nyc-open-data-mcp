@@ -1,0 +1,5 @@
+[
+  {"camis":"50140012","dba":"TOMPKINS RAMEN HOUSE","boro":"Manhattan","building":"141","street":"AVENUE A","zipcode":"10009","cuisine_description":"Japanese","last_inspection_date":"2026-09-18T00:00:00.000"},
+  {"camis":"41720398","dba":"JOE'S RAMEN & DUMPLING","boro":"Manhattan","building":"84","street":"EAST    7 STREET","zipcode":"10003","cuisine_description":"Japanese","last_inspection_date":"2026-08-27T00:00:00.000"},
+  {"camis":"50188841","dba":"SAINT MARKS RAMEN LAB","boro":"Manhattan","building":"29","street":"SAINT MARKS PLACE","zipcode":"10003","cuisine_description":"Japanese","last_inspection_date":"1900-01-01T00:00:00.000"}
+]

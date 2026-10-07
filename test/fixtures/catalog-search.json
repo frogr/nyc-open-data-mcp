@@ -1,0 +1,82 @@
+{
+  "results": [
+    {
+      "resource": {
+        "name": "DOHMH New York City Restaurant Inspection Results",
+        "id": "43nn-pn8j",
+        "resource_name": null,
+        "parent_fxf": [],
+        "description": "The dataset contains every sustained or not yet adjudicated violation citation from every full or special program inspection conducted up to three years prior to the most recent inspection for restaurants and college cafeterias in an active status on the RECORD DATE (date of the data pull). When an inspection results in more than one violation, values for associated fields are repeated for each additional violation record.",
+        "attribution": "Department of Health and Mental Hygiene (DOHMH)",
+        "attribution_link": null,
+        "contact_email": null,
+        "type": "dataset",
+        "updatedAt": "2026-10-06T22:05:45.000Z",
+        "createdAt": "2014-08-01T19:10:59.000Z",
+        "metadata_updated_at": "2026-10-06T22:01:00.000Z",
+        "data_updated_at": "2026-10-06T22:05:45.000Z",
+        "page_views": { "page_views_last_week": 2461, "page_views_last_month": 16865, "page_views_total": 1803321 },
+        "columns_name": ["CAMIS", "DBA", "BORO", "ZIPCODE", "CUISINE DESCRIPTION", "INSPECTION DATE", "SCORE", "GRADE", "Community Districts"],
+        "columns_field_name": ["camis", "dba", "boro", "zipcode", "cuisine_description", "inspection_date", "score", "grade", ":@computed_region_f5dn_yrer"],
+        "columns_datatype": ["Text", "Text", "Text", "Text", "Text", "Calendar date", "Number", "Text", "Number"],
+        "columns_description": ["", "", "", "", "", "", "", "", ""],
+        "columns_format": [{}, {}, {}, {}, {}, {}, {}, {}, {}],
+        "download_count": 412093,
+        "provenance": "official",
+        "lens_view_type": "tabular",
+        "lens_display_type": "table",
+        "locked": false,
+        "backend": "obe",
+        "blob_mime_type": null,
+        "hide_from_data_json": false,
+        "publication_date": "2015-07-10T17:57:20.000Z"
+      },
+      "classification": {
+        "categories": [],
+        "tags": [],
+        "domain_category": "Health",
+        "domain_tags": ["grade", "food", "restaurant", "inspection"],
+        "domain_metadata": [{ "key": "Update_Update-Frequency", "value": "Daily" }]
+      },
+      "metadata": { "domain": "data.cityofnewyork.us" },
+      "permalink": "https://data.cityofnewyork.us/d/43nn-pn8j",
+      "link": "https://data.cityofnewyork.us/Health/DOHMH-New-York-City-Restaurant-Inspection-Results/43nn-pn8j",
+      "owner": { "id": "5fuc-pqz2", "user_type": "interactive", "display_name": "NYC OpenData" },
+      "creator": { "id": "5fuc-pqz2", "user_type": "interactive", "display_name": "NYC OpenData" }
+    },
+    {
+      "resource": {
+        "name": "Open Restaurants Inspections (Historical)",
+        "id": "4dx7-axux",
+        "resource_name": null,
+        "parent_fxf": [],
+        "description": "Inspections of\r\nroadway and sidewalk dining setups under the Open Restaurants program.",
+        "attribution": "Department of Transportation (DOT)",
+        "attribution_link": null,
+        "contact_email": null,
+        "type": "dataset",
+        "updatedAt": "2024-03-12T15:20:01.000Z",
+        "createdAt": "2020-08-04T13:41:09.000Z",
+        "metadata_updated_at": "2024-03-12T15:20:01.000Z",
+        "data_updated_at": "2023-08-03T14:12:44.000Z",
+        "columns_name": ["Restaurant Name", "Borough", "Inspected On"],
+        "columns_field_name": ["restaurantname", "borough", "inspectedon"],
+        "columns_datatype": ["Text", "Text", "Calendar date"],
+        "download_count": 5120,
+        "provenance": "official",
+        "lens_view_type": "tabular",
+        "lens_display_type": "table",
+        "locked": false
+      },
+      "classification": { "categories": [], "tags": [], "domain_category": "Transportation", "domain_tags": [], "domain_metadata": [] },
+      "metadata": { "domain": "data.cityofnewyork.us" },
+      "permalink": "https://data.cityofnewyork.us/d/4dx7-axux",
+      "link": "https://data.cityofnewyork.us/Transportation/Open-Restaurants-Inspections-Historical-/4dx7-axux",
+      "owner": { "id": "5fuc-pqz2", "user_type": "interactive", "display_name": "NYC OpenData" },
+      "creator": { "id": "5fuc-pqz2", "user_type": "interactive", "display_name": "NYC OpenData" }
+    }
+  ],
+  "resultSetSize": 4,
+  "timings": { "serviceMillis": 21, "searchMillis": [14, 11] },
+  "warnings": []
+}

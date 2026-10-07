@@ -1,0 +1,54 @@
+{
+  "name": "nyc-open-data-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for NYC Open Data (Socrata SODA API): search datasets, run safe SoQL queries, restaurant inspection grades, and 311 complaint stats.",
+  "type": "module",
+  "bin": {
+    "nyc-open-data-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/chmod-bin.mjs",
+    "dev": "tsc -p tsconfig.json --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "smoke": "npm run build && node scripts/smoke.mjs",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "nyc",
+    "open-data",
+    "socrata",
+    "soql",
+    "claude",
+    "cursor"
+  ],
+  "author": "Austin French <austindanielfrench@gmail.com> (https://austn.net)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frogr/nyc-open-data-mcp.git"
+  },
+  "homepage": "https://github.com/frogr/nyc-open-data-mcp#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.3"
+  }
+}
