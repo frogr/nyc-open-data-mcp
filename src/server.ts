@@ -17,7 +17,7 @@ import {
 } from "./tools/serviceRequests311.js";
 
 export const SERVER_NAME = "nyc-open-data";
-export const SERVER_VERSION = "0.1.0";
+export const SERVER_VERSION = "0.2.0";
 
 export function createServer(client: SocrataClient = new SocrataClient({ appToken: process.env.SOCRATA_APP_TOKEN })): McpServer {
   const server = new McpServer(

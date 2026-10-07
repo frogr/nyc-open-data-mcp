@@ -71,6 +71,10 @@ export class SocrataClient {
     this.sleep = opts.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
   }
 
+  get hasAppToken(): boolean {
+    return Boolean(this.appToken);
+  }
+
   /** Run a SoQL query against a dataset's /resource endpoint. */
   async query<T = Record<string, unknown>>(datasetId: string, params: SoqlParams): Promise<T[]> {
     const url = new URL(`https://${this.domain}/resource/${encodeURIComponent(datasetId)}.json`);

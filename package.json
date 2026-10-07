@@ -1,25 +1,30 @@
 {
   "name": "nyc-open-data-mcp",
-  "version": "0.1.0",
-  "description": "MCP server for NYC Open Data (Socrata SODA API): search datasets, run safe SoQL queries, restaurant inspection grades, and 311 complaint stats.",
+  "version": "0.2.0",
+  "description": "MCP server for NYC Open Data (Socrata SODA API): search datasets, run safe SoQL queries, restaurant inspection grades, and 311 complaint stats. Runs over stdio or as a remote Streamable HTTP server with a web playground.",
   "type": "module",
   "bin": {
-    "nyc-open-data-mcp": "dist/index.js"
+    "nyc-open-data-mcp": "dist/index.js",
+    "nyc-open-data-mcp-http": "dist/http.js"
   },
   "main": "dist/index.js",
   "files": [
     "dist",
+    "public",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/chmod-bin.mjs",
     "dev": "tsc -p tsconfig.json --watch",
-    "start": "node dist/index.js",
+    "start": "node dist/http.js",
+    "start:stdio": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "smoke": "npm run build && node scripts/smoke.mjs",
+    "smoke:http": "npm run build && node scripts/smoke-http.mjs",
+    "screenshots": "npm run build && node scripts/screenshots.mjs",
     "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "keywords": [
@@ -48,6 +53,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "playwright-core": "^1.63.0",
     "typescript": "^5.9.0",
     "vitest": "^5.0.3"
   }
