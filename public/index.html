@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NYC Open Data MCP</title>
+<meta name="description" content="A remote MCP server that lets Claude, Cursor and other AI assistants look up NYC restaurant grades, 311 complaints and 2,400+ city datasets. Try every tool here.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230c110e'/%3E%3Cpath d='M8 23V9l8 10V9m4 14V9h5' stroke='%2346d483' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0f0d;
+    --surface: #121815;
+    --surface-2: #18201b;
+    --border: #233029;
+    --text: #e4ebe6;
+    --muted: #8d9c93;
+    --faint: #5f6e65;
+    --accent: #46d483;
+    --accent-ink: #062113;
+    --accent-soft: rgba(70, 212, 131, 0.12);
+    --warn: #e2b44c;
+    --bad: #ec7a6b;
+    --radius: 10px;
+    --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 var(--font); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, pre, .mono { font-family: var(--mono); font-size: 0.86em; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  header.top { border-bottom: 1px solid var(--border); }
+  header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; letter-spacing: -0.01em; }
+  .brand:hover { text-decoration: none; }
+  .brand svg { flex: none; }
+  nav.links { display: flex; gap: 20px; font-size: 14px; }
+  nav.links a { color: var(--muted); }
+  nav.links a:hover { color: var(--text); text-decoration: none; }
+
+  .hero { padding-top: 64px; padding-bottom: 40px; }
+  .eyebrow { color: var(--accent); font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 14px; }
+  h1 { font-size: clamp(32px, 5.2vw, 52px); line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 18px; max-width: 16ch; }
+  .lede { color: var(--muted); font-size: 18px; max-width: 62ch; margin: 0 0 28px; }
+  .lede strong { color: var(--text); font-weight: 500; }
+  .endpoint { display: flex; align-items: stretch; max-width: 560px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+  .endpoint .label { padding: 12px 14px; color: var(--muted); font-size: 13px; border-right: 1px solid var(--border); white-space: nowrap; display: flex; align-items: center; }
+  .endpoint code { flex: 1; padding: 12px 14px; color: var(--text); overflow-x: auto; white-space: nowrap; display: flex; align-items: center; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 22px; color: var(--muted); font-size: 14px; }
+  .stats b { color: var(--text); font-weight: 600; }
+
+  section { padding: 40px 0; border-top: 1px solid var(--border); }
+  h2 { font-size: 22px; letter-spacing: -0.01em; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 24px; max-width: 68ch; }
+
+  .examples { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .example { text-align: left; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; cursor: pointer; display: flex; flex-direction: column; gap: 10px; transition: border-color .15s, background .15s; }
+  .example:hover, .example:focus-visible { border-color: var(--accent); background: var(--surface-2); outline: none; }
+  .example q { font-size: 16px; line-height: 1.4; quotes: "\201C" "\201D"; }
+  .example .call { color: var(--faint); font-family: var(--mono); font-size: 12px; line-height: 1.5; word-break: break-word; }
+  .example .call b { color: var(--accent); font-weight: 500; }
+
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tab { font: inherit; font-size: 14px; color: var(--muted); background: transparent; border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+  .tab:hover { color: var(--text); }
+  .tab[aria-selected="true"] { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .tab code { font-size: 13px; }
+
+  .runner { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  form.tool { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .tool-desc { color: var(--muted); font-size: 13px; margin: 0; }
+  .field label { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 600; margin-bottom: 5px; font-family: var(--mono); }
+  .field label .req { color: var(--accent); font-family: var(--font); font-weight: 500; font-size: 12px; }
+  .field .help { color: var(--faint); font-size: 12px; margin-top: 4px; line-height: 1.4; }
+  input, select, textarea { width: 100%; font: inherit; font-size: 14px; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  input[type="checkbox"] { width: auto; accent-color: var(--accent); margin: 0 8px 0 0; }
+  .check { display: flex; align-items: center; font-size: 14px; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn { font: inherit; font-weight: 600; font-size: 15px; color: var(--accent-ink); background: var(--accent); border: 0; border-radius: 8px; padding: 11px 16px; cursor: pointer; }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: 0.6; cursor: progress; }
+  .btn-ghost { font: inherit; font-size: 13px; color: var(--muted); background: transparent; border: 1px solid var(--border); border-radius: 7px; padding: 5px 10px; cursor: pointer; }
+  .btn-ghost:hover { color: var(--text); border-color: var(--faint); }
+  .btn-ghost[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+
+  .result { min-height: 320px; display: flex; flex-direction: column; }
+  .result-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+  .result-head .meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .result-head .meta b { color: var(--text); font-weight: 600; }
+  .result-body { padding: 16px; overflow: auto; }
+  .empty { color: var(--faint); padding: 48px 8px; text-align: center; }
+  .error { color: var(--bad); white-space: pre-wrap; font-family: var(--mono); font-size: 13px; background: rgba(236, 122, 107, 0.08); border: 1px solid rgba(236, 122, 107, 0.3); border-radius: 8px; padding: 12px 14px; margin: 0; }
+  .note { color: var(--muted); font-size: 13px; margin: 14px 0 0; }
+  pre.json { margin: 0; color: #cfe3d6; font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td .small { color: var(--muted); font-size: 12.5px; }
+  .scroll-x { overflow-x: auto; }
+  .grade { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; font-weight: 700; border: 2px solid currentColor; }
+  .grade.A { color: var(--accent); }
+  .grade.B { color: var(--warn); }
+  .grade.C { color: var(--bad); }
+  .grade.other { color: var(--muted); font-size: 12px; }
+  .pill { display: inline-block; font-size: 11.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+  .pill.crit { color: var(--bad); border-color: rgba(236, 122, 107, 0.4); }
+  details.viol summary { cursor: pointer; color: var(--muted); font-size: 12.5px; }
+  details.viol ul { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--muted); }
+  details.viol li { margin-bottom: 4px; }
+
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+  .kpi { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; min-width: 140px; }
+  .kpi .v { font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .kpi .k { color: var(--muted); font-size: 12px; }
+  .bar { position: relative; height: 6px; background: var(--surface-2); border-radius: 3px; margin-top: 6px; min-width: 60px; }
+  .bar span { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 3px; }
+  h3 { font-size: 14px; margin: 22px 0 8px; color: var(--muted); font-weight: 600; }
+  h3:first-child { margin-top: 0; }
+
+  .connect { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .snippet { position: relative; }
+  .snippet pre { margin: 0; padding: 16px 18px; padding-right: 76px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; color: #cfe3d6; font-size: 13px; line-height: 1.6; }
+  .snippet .copy { position: absolute; top: 10px; right: 10px; }
+  .snippet-note { color: var(--muted); font-size: 14px; margin: 4px 0 12px; }
+
+  footer { border-top: 1px solid var(--border); padding: 32px 0 48px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; }
+
+  @media (max-width: 820px) {
+    .runner { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .wrap { padding: 0 16px; }
+    nav.links a.hide-sm { display: none; }
+    .hero { padding-top: 40px; padding-bottom: 28px; }
+    .lede { font-size: 16px; }
+    .endpoint .label { display: none; }
+    .examples { grid-template-columns: minmax(0, 1fr); }
+    .row-2 { grid-template-columns: minmax(0, 1fr); }
+    section { padding: 32px 0; }
+    .result-body { padding: 12px 14px; }
+    table.stack thead { display: none; }
+    table.stack tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    table.stack tr:last-child { border-bottom: 0; }
+    table.stack td { border: 0; padding: 0; }
+    table.stack.lead tr { grid-template-columns: 40px minmax(0, 1fr); column-gap: 12px; }
+    table.stack.lead td:first-child { grid-row: span 3; }
+    table.stack.lead td:not(:first-child) { grid-column: 2; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#18201b"/><path d="M8 23V9l8 10V9m4 14V9h5" stroke="#46d483" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      nyc-open-data-mcp
+    </a>
+    <nav class="links">
+      <a href="#try">Try it</a>
+      <a href="#connect">Connect</a>
+      <a class="hide-sm" href="https://github.com/frogr/nyc-open-data-mcp">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <p class="eyebrow">Remote MCP server</p>
+    <h1>NYC Open Data for your AI assistant</h1>
+    <p class="lede">
+      <strong>MCP</strong> (Model Context Protocol) is the open standard that lets AI apps like Claude and Cursor call outside tools.
+      This server gives them read-only access to <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a>:
+      restaurant health grades, 311 complaints, and the rest of the city's 2,400+ public datasets. No API key needed.
+    </p>
+    <div class="endpoint">
+      <span class="label">Endpoint</span>
+      <code id="endpoint-url">/mcp</code>
+      <button class="btn-ghost" data-copy="#endpoint-url" style="border:0;border-left:1px solid var(--border);border-radius:0;padding:0 16px">Copy</button>
+    </div>
+    <div class="stats" id="stats">
+      <span><b>4</b> read-only tools</span>
+      <span>Streamable HTTP, stateless</span>
+      <span id="health-stat">Checking health...</span>
+    </div>
+  </div>
+
+  <section id="examples">
+    <div class="wrap">
+      <h2>Example questions</h2>
+      <p class="sub">In Claude you just ask the question. Here you can see the tool call it turns into, and run it against live city data.</p>
+      <div class="examples" id="example-list"></div>
+    </div>
+  </section>
+
+  <section id="try">
+    <div class="wrap">
+      <h2>Run a tool</h2>
+      <p class="sub">The same four tools your assistant sees. The form is built from each tool's input schema, and every call goes through the real MCP endpoint.</p>
+      <div class="tabs" role="tablist" id="tool-tabs"></div>
+      <div class="runner">
+        <div class="panel"><form class="tool" id="tool-form" novalidate></form></div>
+        <div class="panel result" aria-live="polite">
+          <div class="result-head">
+            <span class="meta" id="result-meta">No results yet</span>
+            <button type="button" class="btn-ghost" id="json-toggle" aria-pressed="false" disabled>Raw JSON</button>
+          </div>
+          <div class="result-body" id="result-body"><div class="empty">Pick an example above or fill in the form and press Run.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="connect">
+    <div class="wrap">
+      <h2>Connect your client</h2>
+      <p class="sub">Point any MCP client at the endpoint above. Pick yours:</p>
+      <div class="tabs" role="tablist" id="client-tabs"></div>
+      <div class="connect" id="client-body"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Data from <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a> via the Socrata API. Not affiliated with the City of New York.</span>
+    <span><a href="https://github.com/frogr/nyc-open-data-mcp">Source (MIT)</a> &middot; Need an MCP server for your own API? <a href="https://austn.net">austn.net</a></span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (sel) => document.querySelector(sel);
+  const ENDPOINT = location.origin + "/mcp";
+  const BOROUGHS = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"];
+
+  /** Tiny DOM builder. Strings become text nodes, so upstream data is never parsed as HTML. */
+  function h(tag, attrs, ...children) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of children.flat()) {
+      if (c == null || c === false) continue;
+      el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    }
+    return el;
+  }
+
+  // ---------- dates (New York time) ----------
+  function nycToday() {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  }
+  function lastMonth() {
+    const [y, m] = nycToday().split("-").map(Number);
+    const start = new Date(Date.UTC(y, m - 2, 1));
+    const end = new Date(Date.UTC(y, m - 1, 0));
+    const iso = (d) => d.toISOString().slice(0, 10);
+    return { start: iso(start), end: iso(end), label: start.toLocaleString("en-US", { month: "long", timeZone: "UTC" }) };
+  }
+  const lm = lastMonth();
+
+  const EXAMPLES = [
+    { q: "What inspection grades do the ramen spots in 10003 have?", tool: "restaurant_inspections", args: { name: "ramen", zip_code: "10003", limit: 10 } },
+    { q: "What were the top 311 complaints in the East Village last month?", tool: "service_requests_311", args: { zip_codes: ["10003", "10009"], start_date: lm.start, end_date: lm.end, top_n: 10, sample_size: 5 } },
+    { q: "How are the pizza places in Williamsburg doing on inspections?", tool: "restaurant_inspections", args: { cuisine: "Pizza", zip_code: "11211", limit: 10 } },
+    { q: "Any rodent complaints in Flushing in the last 30 days?", tool: "service_requests_311", args: { zip_codes: ["11354", "11355"], complaint_type: "rodent", sample_size: 5 } },
+    { q: "Is there a dataset of NYC street trees?", tool: "search_datasets", args: { query: "street tree census", limit: 5 } },
+    { q: "What are the most common street trees in Brooklyn?", tool: "query_dataset", args: { dataset_id: "uvpi-gqnh", select: "spc_common, count(*) as trees", where: "boroname = 'Brooklyn' AND spc_common IS NOT NULL", group: "spc_common", order: "trees DESC", limit: 10 } },
+  ];
+
+  // ---------- MCP over HTTP ----------
+  let rpcId = 0;
+  async function rpc(method, params) {
+    const res = await fetch("/mcp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: ++rpcId, method, params }),
+    });
+    let body;
+    try { body = await res.json(); } catch { throw new Error(`HTTP ${res.status} from /mcp`); }
+    if (body.error) throw new Error(body.error.message || `HTTP ${res.status}`);
+    return body.result;
+  }
+
+  // ---------- examples ----------
+  function formatCall(tool, args) {
+    const parts = Object.entries(args).map(([k, v]) => `${k}: ${JSON.stringify(v)}`);
+    return h("span", { class: "call" }, h("b", {}, tool), `(${parts.join(", ")})`);
+  }
+  for (const ex of EXAMPLES) {
+    $("#example-list").append(
+      h("button", { type: "button", class: "example", onclick: () => runExample(ex) }, h("q", {}, ex.q), formatCall(ex.tool, ex.args)),
+    );
+  }
+
+  // ---------- tool forms ----------
+  let tools = [];
+  let current = null;
+
+  function fieldFor(name, schema, required) {
+    const id = `f-${name}`;
+    const help = schema.description ? h("div", { class: "help" }, schema.description) : null;
+    if (schema.type === "boolean") {
+      return h("div", { class: "field" },
+        h("label", { class: "check", for: id }, h("input", { type: "checkbox", id, name, "data-kind": "boolean", checked: schema.default === true }), name),
+        help);
+    }
+    let input;
+    if (schema.enum || name === "borough") {
+      const opts = schema.enum || BOROUGHS;
+      input = h("select", { id, name, "data-kind": "string" }, h("option", { value: "" }, required ? "Choose..." : "Any"), opts.map((o) => h("option", { value: o }, o)));
+    } else if (schema.type === "integer" || schema.type === "number") {
+      input = h("input", { type: "number", inputmode: "numeric", id, name, "data-kind": "number", min: schema.minimum, max: schema.maximum, step: schema.type === "integer" ? 1 : "any", placeholder: schema.default != null ? String(schema.default) : "" });
+    } else if (schema.type === "array") {
+      input = h("input", { type: "text", id, name, "data-kind": "array", placeholder: "comma-separated, e.g. 10003, 10009", autocomplete: "off" });
+    } else if (/_date$/.test(name)) {
+      input = h("input", { type: "date", id, name, "data-kind": "string" });
+    } else {
+      input = h("input", { type: "text", id, name, "data-kind": "string", autocomplete: "off", spellcheck: "false", maxlength: schema.maxLength });
+    }
+    return h("div", { class: "field" }, h("label", { for: id }, name, required ? h("span", { class: "req" }, "required") : null), input, help);
+  }
+
+  function renderForm(tool) {
+    current = tool;
+    const props = tool.inputSchema.properties || {};
+    const required = new Set(tool.inputSchema.required || []);
+    const form = $("#tool-form");
+    form.replaceChildren();
+    form.append(h("p", { class: "tool-desc" }, tool.description));
+    const names = Object.keys(props);
+    const paging = names.filter((n) => n === "limit" || n === "offset");
+    for (const n of names) if (!paging.includes(n)) form.append(fieldFor(n, props[n], required.has(n)));
+    if (paging.length) form.append(h("div", { class: "row-2" }, paging.map((n) => fieldFor(n, props[n], required.has(n)))));
+    form.append(h("button", { type: "submit", class: "btn" }, "Run ", tool.name));
+    for (const b of document.querySelectorAll("#tool-tabs .tab")) b.setAttribute("aria-selected", String(b.dataset.tool === tool.name));
+  }
+
+  function readArgs() {
+    const args = {};
+    for (const el of $("#tool-form").querySelectorAll("[name]")) {
+      const kind = el.dataset.kind;
+      if (kind === "boolean") { args[el.name] = el.checked; continue; }
+      const v = el.value.trim();
+      if (!v) continue;
+      if (kind === "number") args[el.name] = Number(v);
+      else if (kind === "array") args[el.name] = v.split(/[\s,]+/).filter(Boolean);
+      else args[el.name] = v;
+    }
+    return args;
+  }
+
+  function fillArgs(args) {
+    for (const el of $("#tool-form").querySelectorAll("[name]")) {
+      const v = args[el.name];
+      if (el.dataset.kind === "boolean") { if (v != null) el.checked = Boolean(v); continue; }
+      el.value = v == null ? "" : Array.isArray(v) ? v.join(", ") : String(v);
+    }
+  }
+
+  $("#tool-form").addEventListener("submit", (e) => { e.preventDefault(); run(current.name, readArgs()); });
+
+  function runExample(ex) {
+    const tool = tools.find((t) => t.name === ex.tool);
+    if (!tool) return;
+    renderForm(tool);
+    fillArgs(ex.args);
+    $("#try").scrollIntoView({ behavior: "smooth", block: "start" });
+    run(ex.tool, ex.args);
+  }
+
+  // ---------- running + results ----------
+  let last = null;
+  let showJson = false;
+  const toggle = $("#json-toggle");
+  toggle.addEventListener("click", () => {
+    showJson = !showJson;
+    toggle.setAttribute("aria-pressed", String(showJson));
+    if (last) paint();
+  });
+
+  async function run(name, args) {
+    const btn = $("#tool-form .btn");
+    btn.disabled = true;
+    btn.textContent = "Running...";
+    $("#result-meta").textContent = `Calling ${name}...`;
+    const t0 = performance.now();
+    try {
+      const result = await rpc("tools/call", { name, arguments: args });
+      last = { name, args, result, ms: Math.round(performance.now() - t0) };
+    } catch (err) {
+      last = { name, args, error: err.message, ms: Math.round(performance.now() - t0) };
+    } finally {
+      btn.disabled = false;
+      btn.replaceChildren("Run ", name);
+    }
+    toggle.disabled = !last.result;
+    paint();
+  }
+
+  function paint() {
+    const body = $("#result-body");
+    const meta = $("#result-meta");
+    body.replaceChildren();
+    if (last.error) {
+      meta.replaceChildren(h("b", {}, last.name), " failed");
+      body.append(h("p", { class: "error" }, last.error));
+      return;
+    }
+    const r = last.result;
+    const data = r.structuredContent ?? safeParse(r.content?.[0]?.text);
+    if (r.isError) {
+      meta.replaceChildren(h("b", {}, last.name), ` returned an error · ${last.ms} ms`);
+      body.append(h("p", { class: "error" }, r.content?.[0]?.text ?? "Unknown error"));
+      return;
+    }
+    meta.replaceChildren(h("b", {}, last.name), ` · ${last.ms} ms`);
+    if (showJson || !data) {
+      body.append(h("pre", { class: "json" }, JSON.stringify(showJson ? r : data ?? r, null, 2)));
+      return;
+    }
+    const render = RENDERERS[last.name] || renderRows;
+    body.append(render(data));
+    if (data.note) body.append(h("p", { class: "note" }, data.note));
+  }
+
+  function safeParse(s) { try { return JSON.parse(s); } catch { return null; } }
+  const fmt = (n) => Number(n).toLocaleString("en-US");
+  const day = (s) => (s ? String(s).slice(0, 10) : "");
+  const nothing = (msg) => h("div", { class: "empty" }, msg);
+
+  function table(headers, rows, cls) {
+    return h("div", { class: "scroll-x" }, h("table", { class: cls || null },
+      h("thead", {}, h("tr", {}, headers.map((x) => h("th", { class: x.num ? "num" : null }, x.label)))),
+      h("tbody", {}, rows)));
+  }
+
+  function gradeBadge(g) {
+    if (!g) return h("span", { class: "grade other" }, "–");
+    return h("span", { class: `grade ${"ABC".includes(g) ? g : "other"}`, title: g }, g);
+  }
+
+  const RENDERERS = {
+    restaurant_inspections(d) {
+      if (!d.restaurants.length) return nothing("No restaurants matched.");
+      const rows = d.restaurants.map((r) => {
+        const li = r.latest_inspection;
+        const crit = li ? li.critical_violation_count : 0;
+        return h("tr", {},
+          h("td", {}, gradeBadge(r.latest_grade)),
+          h("td", {}, h("div", {}, r.name), h("div", { class: "small" }, r.address), r.cuisine ? h("div", { class: "small" }, r.cuisine) : null),
+          h("td", {}, r.latest_grade_meaning ? h("div", {}, r.latest_grade_meaning) : "Not graded", r.latest_grade_date ? h("div", { class: "small" }, "graded ", day(r.latest_grade_date)) : null),
+          h("td", {},
+            li ? [h("div", {}, day(li.date), li.score != null ? ` · ${li.score} pts` : ""), h("div", { class: "small" }, li.type || "")] : h("span", { class: "small" }, "Not yet inspected"),
+            li && li.violations.length
+              ? h("details", { class: "viol" },
+                  h("summary", {}, `${li.violation_count} violation${li.violation_count === 1 ? "" : "s"}`, crit ? " · " : "", crit ? h("span", { class: "pill crit" }, `${crit} critical`) : null),
+                  h("ul", {}, li.violations.map((v) => h("li", {}, v.critical ? h("span", { class: "pill crit" }, "critical") : null, " ", v.description || v.code))))
+              : null));
+      });
+      return h("div", {}, table([{ label: "Grade" }, { label: "Restaurant" }, { label: "Latest grade" }, { label: "Latest inspection" }], rows, "stack lead"),
+        d.has_more ? h("p", { class: "note" }, `More results: set offset to ${d.next_offset}.`) : null);
+    },
+
+    service_requests_311(d) {
+      const f = d.filters || {};
+      const where = [f.zip_codes && f.zip_codes.join(", "), f.borough, f.complaint_type && `type contains "${f.complaint_type}"`].filter(Boolean).join(" · ") || "All of NYC";
+      const out = h("div", {},
+        h("div", { class: "kpis" },
+          h("div", { class: "kpi" }, h("div", { class: "v" }, fmt(d.total_requests)), h("div", { class: "k" }, "311 requests")),
+          h("div", { class: "kpi" }, h("div", { class: "v", style: "font-size:15px;padding-top:5px" }, `${d.date_range.start} to ${d.date_range.end}`), h("div", { class: "k" }, where))));
+      if (!d.total_requests) { out.append(nothing("No requests in this window.")); return out; }
+      const max = Math.max(...d.top_complaint_types.map((t) => t.count), 1);
+      out.append(h("h3", {}, "Top complaint types"),
+        table([{ label: "Complaint type" }, { label: "Requests", num: true }, { label: "Share", num: true }],
+          d.top_complaint_types.map((t) => h("tr", {},
+            h("td", {}, t.complaint_type, h("div", { class: "bar" }, h("span", { style: `width:${(t.count / max) * 100}%` }))),
+            h("td", { class: "num" }, fmt(t.count)),
+            h("td", { class: "num" }, `${(t.share * 100).toFixed(1)}%`)))));
+      if (d.other_types_count) out.append(h("p", { class: "note" }, `${fmt(d.other_types_count)} more requests across other complaint types.`));
+      if (d.samples.length) {
+        out.append(h("h3", {}, "Most recent requests"),
+          table([{ label: "Created" }, { label: "Complaint" }, { label: "Where" }, { label: "Status" }],
+            d.samples.map((s) => h("tr", {},
+              h("td", {}, day(s.created_date)),
+              h("td", {}, s.complaint_type, s.descriptor ? h("div", { class: "small" }, s.descriptor) : null),
+              h("td", {}, s.address || "", s.zip_code ? h("div", { class: "small" }, s.zip_code) : null),
+              h("td", {}, h("span", { class: "pill" }, s.status || "?"), s.agency ? h("div", { class: "small" }, s.agency) : null))), "stack"));
+      }
+      return out;
+    },
+
+    search_datasets(d) {
+      if (!d.datasets.length) return nothing("No datasets matched.");
+      return h("div", {},
+        h("p", { class: "note", style: "margin:0 0 12px" }, `${fmt(d.total)} matching datasets`),
+        table([{ label: "Dataset" }, { label: "Id" }, { label: "Category" }, { label: "Updated" }],
+          d.datasets.map((x) => h("tr", {},
+            h("td", {}, x.url ? h("a", { href: x.url, target: "_blank", rel: "noopener" }, x.name) : x.name, x.description ? h("div", { class: "small" }, x.description) : null),
+            h("td", {}, h("code", {}, x.id)),
+            h("td", {}, x.category || ""),
+            h("td", { style: "white-space:nowrap" }, day(x.updated_at)))), "stack"));
+    },
+
+    query_dataset: (d) => renderRows(d),
+  };
+
+  function renderRows(d) {
+    const rows = d.rows || [];
+    if (!rows.length) return nothing("No rows.");
+    const cols = [...new Set(rows.flatMap((r) => Object.keys(r)))].slice(0, 12);
+    const isNum = (c) => rows.every((r) => r[c] == null || /^-?\d+(\.\d+)?$/.test(String(r[c])));
+    const cell = (v) => (v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v));
+    return h("div", {},
+      h("p", { class: "note", style: "margin:0 0 12px" }, `${rows.length} row${rows.length === 1 ? "" : "s"}${d.has_more && !d.note ? `, more available from offset ${d.next_offset}` : ""}`),
+      table(cols.map((c) => ({ label: c, num: isNum(c) })),
+        rows.map((r) => h("tr", {}, cols.map((c) => h("td", { class: isNum(c) ? "num" : null }, isNum(c) && r[c] != null ? fmt(r[c]) : cell(r[c])))))));
+  }
+
+  // ---------- connect snippets ----------
+  const CLIENTS = [
+    { id: "claude-code", label: "Claude Code", blocks: [
+      { note: "Run once in your terminal:", code: `claude mcp add --transport http nyc-open-data ${ENDPOINT}` },
+    ] },
+    { id: "claude-desktop", label: "Claude Desktop", blocks: [
+      { note: "Settings > Connectors > Add custom connector, then paste this URL (custom connectors depend on your plan):", code: ENDPOINT },
+      { note: "Or add this to claude_desktop_config.json and restart (uses the mcp-remote bridge, needs Node):", code: JSON.stringify({ mcpServers: { "nyc-open-data": { command: "npx", args: ["-y", "mcp-remote", ENDPOINT] } } }, null, 2) },
+    ] },
+    { id: "cursor", label: "Cursor", blocks: [
+      { note: "Add to ~/.cursor/mcp.json (all projects) or .cursor/mcp.json (one project):", code: JSON.stringify({ mcpServers: { "nyc-open-data": { url: ENDPOINT } } }, null, 2) },
+    ] },
+    { id: "local", label: "Run locally", blocks: [
+      { note: "Prefer stdio on your own machine? No server needed:", code: "npx -y nyc-open-data-mcp" },
+      { note: "Or debug this endpoint with the MCP Inspector: run this, choose Streamable HTTP, and paste the endpoint URL.", code: "npx @modelcontextprotocol/inspector" },
+    ] },
+  ];
+
+  function renderClient(c) {
+    for (const b of document.querySelectorAll("#client-tabs .tab")) b.setAttribute("aria-selected", String(b.dataset.client === c.id));
+    $("#client-body").replaceChildren(...c.blocks.map((b) =>
+      h("div", {}, h("p", { class: "snippet-note" }, b.note),
+        h("div", { class: "snippet" }, h("pre", {}, h("code", {}, b.code)), h("button", { type: "button", class: "btn-ghost copy", onclick: (e) => copy(b.code, e.currentTarget) }, "Copy")))));
+  }
+  for (const c of CLIENTS) {
+    $("#client-tabs").append(h("button", { type: "button", class: "tab", role: "tab", "data-client": c.id, onclick: () => renderClient(c) }, c.label));
+  }
+  renderClient(CLIENTS[0]);
+
+  async function copy(text, btn) {
+    try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; }
+    catch { btn.textContent = "Select + copy"; }
+    setTimeout(() => (btn.textContent = "Copy"), 1500);
+  }
+  $("#endpoint-url").textContent = ENDPOINT;
+  document.querySelector("[data-copy]").addEventListener("click", (e) => copy(ENDPOINT, e.currentTarget));
+
+  // ---------- boot ----------
+  fetch("/health").then((r) => r.json()).then((hl) => {
+    $("#health-stat").replaceChildren(h("b", {}, "Healthy"), ` · v${hl.version} · ${hl.limits.per_ip_per_minute} calls/min per visitor`);
+  }).catch(() => { $("#health-stat").textContent = "Health check failed"; });
+
+  rpc("tools/list", {}).then((res) => {
+    tools = res.tools;
+    for (const t of tools) {
+      $("#tool-tabs").append(h("button", { type: "button", class: "tab", role: "tab", "data-tool": t.name, onclick: () => renderForm(t) }, h("code", {}, t.name)));
+    }
+    const preferred = tools.find((t) => t.name === "restaurant_inspections") || tools[0];
+    renderForm(preferred);
+    fillArgs(EXAMPLES[0].args);
+  }).catch((err) => {
+    $("#tool-form").replaceChildren(h("p", { class: "error" }, `Could not load tools: ${err.message}`));
+  });
+})();
+</script>
+</body>
+</html>
